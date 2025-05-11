@@ -14,10 +14,13 @@ app = FastAPI(
     version="1.0.0"
 )
 
-# Configure CORS
+# Update CORS settings
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
+    allow_origins=[
+        "http://localhost:3000",  # Local development
+        "https://fake-news-detection-theta.vercel.app/"  # Deployed frontend
+    ],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
