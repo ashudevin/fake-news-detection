@@ -132,17 +132,36 @@ async def get_recent_reports(limit=10, fake_only=False):
     # Build query
     query = {"is_fake": True} if fake_only else {}
     
-    # Get reports sorted by timestamp
-    cursor = reports_collection.find(query).sort("timestamp", -1).limit(limit)
-    reports = await cursor.to_list(length=limit)
+    try:
+        # Get reports sorted by timestamp
+        cursor = reports_collection.find(query).sort("timestamp", -1).limit(limit)
+        reports = await cursor.to_list(length=limit)
+        
+        # Debug: print reports count
+        print(f"Found {len(reports)} reports in MongoDB")
+        if reports:
+            print(f"First report sample fields: {list(reports[0].keys())}")
+        
+        # Convert ObjectId to string for JSON serialization
+        processed_reports = []
+        for report in reports:
+            # Make a copy to avoid modifying the original
+            processed_report = dict(report)
+            # Convert _id to string and assign to id field
+            processed_report["id"] = str(processed_report.pop("_id"))
+            # Ensure timestamp is in ISO format
+            if "timestamp" in processed_report and processed_report["timestamp"]:
+                processed_report["timestamp"] = processed_report["timestamp"].isoformat()
+            
+            processed_reports.append(processed_report)
+        
+        # Convert to NewsReport objects
+        return [NewsReport(**r) for r in processed_reports]
     
-    # Convert ObjectId to string for JSON serialization
-    for report in reports:
-        report["id"] = str(report["_id"])
-        report["timestamp"] = report["timestamp"].isoformat()
-    
-    # Convert to NewsReport objects
-    return [NewsReport(**r) for r in reports]
+    except Exception as e:
+        print(f"Error fetching reports from MongoDB: {str(e)}")
+        # Fallback to empty list
+        return []
 
 async def generate_chart(chart_type, days=7, width=800, height=500):
     """Generate chart as PNG image"""

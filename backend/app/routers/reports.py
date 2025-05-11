@@ -2,8 +2,14 @@ from fastapi import APIRouter, HTTPException, Query, Response
 from typing import List, Optional
 from datetime import datetime, timedelta
 import json
+import logging
+import traceback
 from ..services.report_service import get_report_statistics, get_recent_reports, generate_chart
 from ..models.report_models import ReportStatistics, NewsList
+
+# Set up logging
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
 
 router = APIRouter()
 
@@ -29,9 +35,18 @@ async def get_latest_reports(
     Get the most recent news reports processed by the system
     """
     try:
+        logger.info(f"Fetching recent reports. Limit: {limit}, Fake only: {fake_only}")
         reports = await get_recent_reports(limit, fake_only)
+        logger.info(f"Retrieved {len(reports)} reports")
+        
+        # Log the first report for debugging (if available)
+        if reports and len(reports) > 0:
+            logger.info(f"First report sample: {reports[0].dict()}")
+        
         return {"items": reports}
     except Exception as e:
+        logger.error(f"Error retrieving reports: {str(e)}")
+        logger.error(traceback.format_exc())
         raise HTTPException(status_code=500, detail=f"Error retrieving reports: {str(e)}")
 
 @router.get("/chart/{chart_type}")
