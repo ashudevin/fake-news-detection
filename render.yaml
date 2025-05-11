@@ -30,4 +30,4 @@ services:
       npm start
     envVars:
       - key: REACT_APP_API_URL
-        value: https://fake-news-detection-backend.onrender.com 
+        value: https://fake-news-detection-s4xf.onrender.com 
