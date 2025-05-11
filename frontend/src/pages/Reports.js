@@ -92,14 +92,33 @@ function Reports() {
   };
 
   function formatDate(dateString) {
-    const date = new Date(dateString);
-    return new Intl.DateTimeFormat('en-US', {
-      year: 'numeric',
-      month: 'short',
-      day: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit',
-    }).format(date);
+    if (!dateString) return 'Unknown';
+    
+    try {
+      // Parse the ISO string with timezone information
+      const date = new Date(dateString);
+      
+      // Check if date is valid
+      if (isNaN(date.getTime())) {
+        console.error('Invalid date string:', dateString);
+        return 'Invalid Date';
+      }
+      
+      // Format exactly as "May 11, 2025, 06:45 PM"
+      const options = {
+        month: 'long',
+        day: 'numeric',
+        year: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit',
+        hour12: true
+      };
+      
+      return date.toLocaleString('en-US', options);
+    } catch (error) {
+      console.error('Error formatting date:', error);
+      return 'Date Error';
+    }
   }
 
   function truncateText(text, maxLength = 100) {

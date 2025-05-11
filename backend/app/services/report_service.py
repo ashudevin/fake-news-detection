@@ -7,6 +7,7 @@ import plotly.express as px
 import plotly.io as pio
 from datetime import datetime, timedelta
 import asyncio
+import pytz
 from ..models.report_models import NewsReport, StatCount, ConfidenceStats, ReportStatistics
 from ..config.mongodb import reports_collection
 
@@ -16,7 +17,10 @@ os.makedirs(STATIC_DIR, exist_ok=True)
 
 async def add_news_to_report(title, content, source, is_fake, confidence, explanation):
     """Add news analysis result to reports database"""
-    # Create new report
+    # Create new report with timezone-aware timestamp
+    # Using UTC timezone to avoid any timezone issues
+    current_time = datetime.now(pytz.UTC)
+    
     report = {
         "title": title,
         "content": content[:500] + ("..." if len(content) > 500 else ""),  # Truncate content for storage
@@ -24,7 +28,7 @@ async def add_news_to_report(title, content, source, is_fake, confidence, explan
         "is_fake": is_fake,
         "confidence": confidence,
         "explanation": explanation,
-        "timestamp": datetime.now()
+        "timestamp": current_time
     }
     
     # Insert into MongoDB
@@ -35,12 +39,17 @@ async def add_news_to_report(title, content, source, is_fake, confidence, explan
 
 async def get_report_statistics(days=7):
     """Generate statistics from reports"""
-    # Calculate cutoff date
-    cutoff_date = datetime.now() - timedelta(days=days)
+    # Calculate cutoff date with timezone
+    cutoff_date = datetime.now(pytz.UTC) - timedelta(days=days)
     
     # Get all reports
     cursor = reports_collection.find({})
     reports = await cursor.to_list(length=None)
+    
+    # Ensure all timestamps are timezone-aware for comparison
+    for report in reports:
+        if "timestamp" in report and report["timestamp"] and not report["timestamp"].tzinfo:
+            report["timestamp"] = report["timestamp"].replace(tzinfo=pytz.UTC)
     
     # Filter for recent reports
     recent_reports = [r for r in reports if r["timestamp"] >= cutoff_date]
@@ -95,9 +104,10 @@ async def get_report_statistics(days=7):
         max_confidence = 0
         ranges = {"0.0-0.2": 0, "0.2-0.4": 0, "0.4-0.6": 0, "0.6-0.8": 0, "0.8-1.0": 0}
     
-    # Daily counts
+    # Daily counts - use timezone-aware timestamps for formatting
     daily_counts = {}
     for report in reports:
+        # Format timestamp with timezone info
         date = report["timestamp"].strftime("%Y-%m-%d")
         if date not in daily_counts:
             daily_counts[date] = {"real": 0, "fake": 0, "total": 0}
@@ -153,9 +163,16 @@ async def get_recent_reports(limit=10, fake_only=False):
                 if "_id" in processed_report:
                     processed_report["id"] = str(processed_report.pop("_id"))
                 
-                # Ensure timestamp is in ISO format
+                # Ensure timestamp is in proper ISO format with timezone info
                 if "timestamp" in processed_report and processed_report["timestamp"]:
-                    processed_report["timestamp"] = processed_report["timestamp"].isoformat()
+                    # Check if the timestamp is timezone-aware
+                    timestamp = processed_report["timestamp"]
+                    if not timestamp.tzinfo:
+                        # If not timezone-aware, make it timezone-aware (UTC)
+                        timestamp = timestamp.replace(tzinfo=pytz.UTC)
+                    
+                    # Convert to ISO format with timezone information
+                    processed_report["timestamp"] = timestamp.isoformat()
                 
                 # Ensure all required fields are present
                 required_fields = ["title", "content", "is_fake", "confidence", "explanation"]
