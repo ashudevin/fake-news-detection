@@ -16,7 +16,7 @@ const api = axios.create({
  */
 export const analyzeNews = async (data) => {
   try {
-    const response = await api.post('/detect', data);
+    const response = await api.post('/api/detect', data);
     return response.data;
   } catch (error) {
     handleApiError(error);
@@ -33,7 +33,7 @@ export const uploadNewsFile = async (file) => {
     const formData = new FormData();
     formData.append('file', file);
 
-    const response = await api.post('/upload', formData, {
+    const response = await api.post('/api/upload', formData, {
       headers: {
         'Content-Type': 'multipart/form-data',
       },
@@ -51,7 +51,7 @@ export const uploadNewsFile = async (file) => {
  */
 export const getStatistics = async (days = 7) => {
   try {
-    const response = await api.get(`/statistics?days=${days}`);
+    const response = await api.get(`/api/statistics?days=${days}`);
     return response.data;
   } catch (error) {
     handleApiError(error);
@@ -66,7 +66,7 @@ export const getStatistics = async (days = 7) => {
  */
 export const getReports = async (limit = 10, fakeOnly = false) => {
   try {
-    const response = await api.get(`/recent?limit=${limit}&fake_only=${fakeOnly}`);
+    const response = await api.get(`/api/recent?limit=${limit}&fake_only=${fakeOnly}`);
     return response.data;
   } catch (error) {
     handleApiError(error);
@@ -83,7 +83,7 @@ export const analyzeTextContent = async (text) => {
     const formData = new FormData();
     formData.append('text', text);
 
-    const response = await api.post('/analyze', formData);
+    const response = await api.post('/api/analyze', formData);
     return response.data;
   } catch (error) {
     handleApiError(error);
