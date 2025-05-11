@@ -6,7 +6,7 @@ load_dotenv()
 
 # MongoDB connection settings
 MONGODB_URL = os.getenv("MONGODB_URL")
-DATABASE_NAME = os.getenv("MONGODB_DATABASE", "fake_news_detection")
+DATABASE_NAME = os.getenv("DATABASE_NAME", "fake_news_detection")
 
 # Create MongoDB client
 client = AsyncIOMotorClient(MONGODB_URL)

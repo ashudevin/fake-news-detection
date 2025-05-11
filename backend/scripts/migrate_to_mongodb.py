@@ -6,7 +6,7 @@ from motor.motor_asyncio import AsyncIOMotorClient
 
 # MongoDB connection settings
 MONGODB_URL = os.getenv("MONGODB_URL")
-DATABASE_NAME = os.getenv("MONGODB_DATABASE", "fake_news_detection")
+DATABASE_NAME = os.getenv("DATABASE_NAME", "fake_news_detection")
 
 # Path to reports.json
 REPORTS_FILE = os.path.join(os.path.dirname(os.path.dirname(__file__)), "app", "data", "reports.json")
