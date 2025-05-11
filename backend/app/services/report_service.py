@@ -145,18 +145,41 @@ async def get_recent_reports(limit=10, fake_only=False):
         # Convert ObjectId to string for JSON serialization
         processed_reports = []
         for report in reports:
-            # Make a copy to avoid modifying the original
-            processed_report = dict(report)
-            # Convert _id to string and assign to id field
-            processed_report["id"] = str(processed_report.pop("_id"))
-            # Ensure timestamp is in ISO format
-            if "timestamp" in processed_report and processed_report["timestamp"]:
-                processed_report["timestamp"] = processed_report["timestamp"].isoformat()
-            
-            processed_reports.append(processed_report)
+            try:
+                # Make a copy to avoid modifying the original
+                processed_report = dict(report)
+                
+                # Convert _id to string and assign to id field
+                if "_id" in processed_report:
+                    processed_report["id"] = str(processed_report.pop("_id"))
+                
+                # Ensure timestamp is in ISO format
+                if "timestamp" in processed_report and processed_report["timestamp"]:
+                    processed_report["timestamp"] = processed_report["timestamp"].isoformat()
+                
+                # Ensure all required fields are present
+                required_fields = ["title", "content", "is_fake", "confidence", "explanation"]
+                missing_fields = [field for field in required_fields if field not in processed_report]
+                
+                if missing_fields:
+                    print(f"Warning: Report missing fields: {missing_fields}. Skipping...")
+                    continue
+                    
+                processed_reports.append(processed_report)
+            except Exception as e:
+                print(f"Error processing report: {e}")
+                continue
         
         # Convert to NewsReport objects
-        return [NewsReport(**r) for r in processed_reports]
+        report_objects = []
+        for r in processed_reports:
+            try:
+                report_objects.append(NewsReport(**r))
+            except Exception as e:
+                print(f"Error creating NewsReport object: {e}")
+                
+        print(f"Successfully processed {len(report_objects)} reports")
+        return report_objects
     
     except Exception as e:
         print(f"Error fetching reports from MongoDB: {str(e)}")

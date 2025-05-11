@@ -53,11 +53,13 @@ function Reports() {
     setLoading(true);
     setError('');
     try {
-      const data = await getReports(rowsPerPage, filterFakeOnly);
+      // Fetch a large number of reports to handle client-side pagination
+      const data = await getReports(100, filterFakeOnly);
+      console.log('Reports fetched:', data);
       setReports(data.items || []);
     } catch (err) {
       setError('Failed to load reports. Please try again later.');
-      console.error(err);
+      console.error('Error fetching reports:', err);
     } finally {
       setLoading(false);
     }

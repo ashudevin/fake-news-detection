@@ -66,9 +66,20 @@ export const getStatistics = async (days = 7) => {
  */
 export const getReports = async (limit = 10, fakeOnly = false) => {
   try {
+    console.log(`Fetching reports with limit=${limit}, fake_only=${fakeOnly}`);
     const response = await api.get(`/api/recent?limit=${limit}&fake_only=${fakeOnly}`);
-    return response.data;
+    
+    // Ensure we return a valid items array even if the response is empty
+    const responseData = response.data || {};
+    if (!responseData.items) {
+      console.warn('Response missing items array:', responseData);
+      responseData.items = [];
+    }
+    
+    console.log(`Fetched ${responseData.items.length} reports`);
+    return responseData;
   } catch (error) {
+    console.error('Error in getReports:', error);
     handleApiError(error);
   }
 };
